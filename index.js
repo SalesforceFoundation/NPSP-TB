@@ -11,8 +11,17 @@ var options = {
             //'access_token': process.env.GITHUB_ACCESS_TOKEN
   }
 };
+
+var T = new Twit({
+  consumer_key:         process.env.CONSUMER_KEY,
+  consumer_secret:      process.env.CONSUMER_SECRET,
+  access_token:         process.env.ACCESS_TOKEN,
+  access_token_secret:  process.env.ACCESS_TOKEN_SECRET
+});
+
+
 var etag = '';
-var POLLING_INTERVAL = 10000;
+var POLLING_INTERVAL = 1000;
 
 function callback() {
   console.log('Setting header to: ' + etag);
@@ -35,8 +44,25 @@ function callback() {
       if (response.statusCode == 200){
         //parse body and tweet when ready
         console.log('Returned 200');
+        var event_body = JSON.parse(body);
 
+        for (var i=0; i < event_body.length; i++){
+          var event_type = event_body[i]['type'];
+          //always tweet a release
+          if (event_type == 'ReleaseEvent'){
+            T.post('statuses/update', { status: 'Release ' + event_body[i]['payload']['release']['name'] + " now available at " + event_body[i]['payload']['release']['html_url']}, function(err, data, response) { });
+          } else if (event_type == 'CreateEvent'){
 
+          } else if (event_type == 'IssuesEvent'){
+
+          } else if(event_type == 'PublicEvent'){
+
+          } else if(event_type == 'PullRequestEvent'){
+
+          } else {
+
+          }
+        }
 
         //set the new etag
         etag = response.headers['etag'];
@@ -58,17 +84,9 @@ function callback() {
   setTimeout(callback, POLLING_INTERVAL);
 
 
-var T = new Twit({
-  consumer_key:         process.env.CONSUMER_KEY,
-  consumer_secret:      process.env.CONSUMER_SECRET,
-  access_token:         process.env.ACCESS_TOKEN,
-  access_token_secret:  process.env.ACCESS_TOKEN_SECRET
-});
 
-/*
-T.post('statuses/update', { status: 'I am alive 3!' }, function(err, data, response) {
-  console.log(data);
-})*/
+
+
 
 /*
 var github = new GitHubApi({
