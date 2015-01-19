@@ -25,7 +25,7 @@ function callback() {
       console.log('ERROR');
       console.log(error);
     }else{
-      console.log(response.headers);
+      console.log(response.headers['x-ratelimit-remaining'] + ' remaining of ' + response.headers['x-ratelimit-limit'] + ' requests');
       //respect the rate limit
       if (response.headers['x-poll-interval']){
         POLLING_INTERVAL =  response.headers['x-poll-interval'] * 1000;
@@ -47,11 +47,12 @@ function callback() {
           access_token_secret:  process.env.ACCESS_TOKEN_SECRET
         });
 
-
         for (var i=0; i < event_body.length; i++){
           event_type = event_body[i]['type'];
+          console.log('EVENT TYPE:' + event_type);
           //always tweet a release
           if (event_type == 'ReleaseEvent'){
+            console.log('ReleaseEvent twitter post.');
             T.post('statuses/update', { status: 'Release ' + event_body[i]['payload']['release']['name'] + " now available at " + event_body[i]['payload']['release']['html_url']}, function(err, data, response) { });
 
           } else if (event_type == 'CreateEvent'){
@@ -61,7 +62,12 @@ function callback() {
           } else if(event_type == 'PublicEvent'){
 
           } else if(event_type == 'PullRequestEvent' && event_body.length === 1){
-            //tweet a pull request if its new
+
+            //tweet a pull being merged in
+            if (event_body[i]['action'] == "closed" && event_body[i]['pull_request']['base']['merged'] == 'true'){
+              console.log('Closed pull request twitter post.');
+              T.post('statuses/update', { status: 'New code added!  Check it out: ' + event_body[i]['pull_request']['html_url'] }, function(err, data, response) { });
+            }
           } else {
 
           }
