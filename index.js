@@ -45,20 +45,25 @@ function callback() {
         //parse body and tweet when ready
         console.log('Returned 200');
         var event_body = JSON.parse(body);
+        var event_type = '';
+
+
+
 
         for (var i=0; i < event_body.length; i++){
-          var event_type = event_body[i]['type'];
+          event_type = event_body[i]['type'];
           //always tweet a release
           if (event_type == 'ReleaseEvent'){
             T.post('statuses/update', { status: 'Release ' + event_body[i]['payload']['release']['name'] + " now available at " + event_body[i]['payload']['release']['html_url']}, function(err, data, response) { });
+
           } else if (event_type == 'CreateEvent'){
-
-          } else if (event_type == 'IssuesEvent'){
-
+            //not used on repo events
+          } else if (event_type == 'IssuesEvent' && event_body.length === 1){
+            //only tweet an issue if its new
           } else if(event_type == 'PublicEvent'){
 
-          } else if(event_type == 'PullRequestEvent'){
-
+          } else if(event_type == 'PullRequestEvent' && event_body.length === 1){
+            //tweet a pull request if its new
           } else {
 
           }
