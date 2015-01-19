@@ -12,13 +12,6 @@ var options = {
   }
 };
 
-var T = new Twit({
-  consumer_key:         process.env.CONSUMER_KEY,
-  consumer_secret:      process.env.CONSUMER_SECRET,
-  access_token:         process.env.ACCESS_TOKEN,
-  access_token_secret:  process.env.ACCESS_TOKEN_SECRET
-});
-
 
 var etag = '';
 var POLLING_INTERVAL = 1000;
@@ -47,7 +40,12 @@ function callback() {
         var event_body = JSON.parse(body);
         var event_type = '';
 
-
+        var T = new Twit({
+          consumer_key:         process.env.CONSUMER_KEY,
+          consumer_secret:      process.env.CONSUMER_SECRET,
+          access_token:         process.env.ACCESS_TOKEN,
+          access_token_secret:  process.env.ACCESS_TOKEN_SECRET
+        });
 
 
         for (var i=0; i < event_body.length; i++){
@@ -76,6 +74,22 @@ function callback() {
         //do something random if too much
         //time has gone by
         console.log('Returned 304');
+
+        //check Hub for popular questions or
+        //new knowledge articles
+        var nforce = require('nforce');
+
+        var org = nforce.createConnection({
+          clientId: 'SOME_OAUTH_CLIENT_ID',
+          clientSecret: 'SOME_OAUTH_CLIENT_SECRET',
+          redirectUri: 'http://localhost:3000/oauth/_callback',
+          apiVersion: 'v27.0',  // optional, defaults to current salesforce API version
+          environment: 'production',  // optional, salesforce 'sandbox' or 'production', production default
+          mode: 'multi' // optional, 'single' or 'multi' user mode, multi default
+        });
+
+
+
       } else {
         console.log('RETURNED A ' + response.statusCode);
       }
