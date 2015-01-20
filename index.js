@@ -1,5 +1,5 @@
-var Twit = require('twit');
 var request = require('request');
+var Twit = require('twit');
 
 var options = {
   url: 'https://api.github.com/repos/SalesforceFoundation/Cumulus/events',
