@@ -71,7 +71,7 @@ function callback() {
             var title = event_body[i].payload.pull_request.title;
             if (event_body[i].payload.action === "closed" && event_body[i].payload.pull_request.merged === true && title.substr(0,22) !== 'Merge conflict merging'){
               console.log('TWITTER POST: PullRequestClosed ' + title);
-              status_message = 'New code added to the main code line!  Check it out: ' + event_body[i].payload.pull_request.html_url;
+              status_message = 'New code added to the main branch - check it out: ' + event_body[i].payload.pull_request.html_url;
               twitterUpdate(status_message);
             }
           } else {
