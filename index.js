@@ -51,12 +51,10 @@ function callback() {
           //always tweet a release
           if (event_type == 'ReleaseEvent'){
             if (event_body[i].payload.release.prerelease === true){
-              status_message = 'A beta release ' + event_body[i].payload.release.name + " for sandboxes and DE orgs is now available at " + event_body[i].payload.release.html_url;
+              status_message = 'Beta release ' + event_body[i].payload.release.name + " for sandboxes and DE orgs is now available at " + event_body[i].payload.release.html_url;
             }else{
               status_message = '' + event_body[i].payload.release.name + ' is now available! Notes & links here: ' + event_body[i].payload.release.html_url;
             }
-
-            status_message = 'Release ' + event_body[i].payload.release.name + " now available at " + event_body[i].payload.release.html_url;
             console.log('TWITTER POST:  ReleaseEvent ' + event_body[i].payload.release.name);
             twitterUpdate(status_message);
 
