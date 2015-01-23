@@ -13,6 +13,8 @@ var options = {
 var etag = '';
 var POLLING_INTERVAL = 1000;
 var modified_since = '';
+var previous_posts = [];
+var last_post_time = '';
 
 function callback() {
   console.log('<---------- START ---------->');
@@ -56,7 +58,6 @@ function callback() {
               status_message = '' + event_body[i].payload.release.name + ' is now available! Notes & links here: ' + event_body[i].payload.release.html_url;
             }
             console.log('TWITTER POST:  ReleaseEvent ' + event_body[i].payload.release.name);
-            twitterUpdate(status_message);
 
           } else if (event_type == 'CreateEvent'){
             //not used on repo events
@@ -70,11 +71,21 @@ function callback() {
             if (event_body[i].payload.action === "closed" && event_body[i].payload.pull_request.merged === true && title.substr(0,22) !== 'Merge conflict merging'){
               console.log('TWITTER POST: PullRequestClosed ' + title);
               status_message = 'New code added to the main branch - check it out: ' + event_body[i].payload.pull_request.html_url;
-              twitterUpdate(status_message);
             }
           } else {
-
+              //some other event type we dont' care about
           }
+
+          if (status_message !== ''){
+            if (previous_posts.indexOf(status_message) === -1)
+              twitterUpdate(status_message);
+            if (last_ten_posts.length > 19){
+              previous_posts.shift();
+            }
+
+            previous_posts.push(status_message);
+          }
+
         }
         //set the new etag
         etag = response.headers.etag;
@@ -114,6 +125,13 @@ function callback() {
 
   setTimeout(callback, POLLING_INTERVAL);
 
+
+  //THIS JUST NEEDS TO BE TURNED INTO A STANDALONE FUNCTION
+  //TAKE status_message as its input, maintains a stack of messages
+  //to tweet out at regular intervals according to its own internally
+  //maintained clock.  calling code doesn't care about tweet times
+
+
   function twitterUpdate(status_message){
     var T = new Twit({
       consumer_key:         process.env.CONSUMER_KEY,
@@ -121,12 +139,22 @@ function callback() {
       access_token:         process.env.ACCESS_TOKEN,
       access_token_secret:  process.env.ACCESS_TOKEN_SECRET
     });
-    T.post('statuses/update', { status: status_message },   function (err, data, response) {
 
+    var postTweet = function () {
+      T.post('statuses/update', { status: status_message }, function (err, data, response) {
         if (err !== null){
           console.log('TwitterError: ' + err);
         }else {
+          last_post_time = Date.now();
           console.log('TwitterPostSuccess');
         }
-    });
+      });
+    };
+
+    //only tweet every 15 minutes, queue everything else up
+    if (Date.now() - last_post_time > 900000){
+      postTweet();
+    } else{
+      setTimeout(postTweet(), last_post_time + 900000);
+    }
   }
