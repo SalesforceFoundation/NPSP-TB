@@ -14,7 +14,8 @@ var etag = '';
 var POLLING_INTERVAL = 1000;
 var modified_since = '';
 var previous_posts = [];
-var last_post_time = '';
+var last_post_time = Date.now() - 900000;
+console.log(last_post_time);
 
 function callback() {
   console.log('<---------- START ---------->');
@@ -79,7 +80,7 @@ function callback() {
           if (status_message !== ''){
             if (previous_posts.indexOf(status_message) === -1)
               twitterUpdate(status_message);
-            if (last_ten_posts.length > 19){
+            if (previous_posts.length > 19){
               previous_posts.shift();
             }
 
@@ -133,15 +134,17 @@ function callback() {
 
 
   function twitterUpdate(status_message){
-    var T = new Twit({
-      consumer_key:         process.env.CONSUMER_KEY,
-      consumer_secret:      process.env.CONSUMER_SECRET,
-      access_token:         process.env.ACCESS_TOKEN,
-      access_token_secret:  process.env.ACCESS_TOKEN_SECRET
-    });
 
-    var postTweet = function () {
-      T.post('statuses/update', { status: status_message }, function (err, data, response) {
+
+      var T = new Twit({
+        consumer_key:         process.env.CONSUMER_KEY,
+        consumer_secret:      process.env.CONSUMER_SECRET,
+        access_token:         process.env.ACCESS_TOKEN,
+        access_token_secret:  process.env.ACCESS_TOKEN_SECRET
+      });
+
+    var postTweet = function (status_message){
+        T.post('statuses/update', { status: status_message }, function (err, data, response) {
         if (err !== null){
           console.log('TwitterError: ' + err);
         }else {
@@ -150,11 +153,22 @@ function callback() {
         }
       });
     };
-
     //only tweet every 15 minutes, queue everything else up
-    if (Date.now() - last_post_time > 900000){
-      postTweet();
+
+    console.log('DIFF: ' + (Date.now() - last_post_time));
+    if (Date.now() - last_post_time > 120000){
+      console.log('Tweet now');
+      postTweet(status_message);
+      last_post_time = Date.now();
     } else{
-      setTimeout(postTweet(), last_post_time + 900000);
+      console.log('Tweet Later');
+
+      var timetowait = (Date.now() - last_post_time) + 120000;
+      console.log('WTF? ' + timetowait);
+      last_post_time = Date.now() + timetowait + 120000;
+      
+      setTimeout(function() {
+        postTweet(status_message);
+      }, timetowait);
     }
   }
