@@ -9,12 +9,11 @@ var options = {
   }
 };
 
-
 var etag = '';
 var POLLING_INTERVAL = 1000;
 var modified_since = '';
 var previous_posts = [];
-var last_post_time = Date.now() - 900000;
+var last_post_time = Date.now() - 240000;
 console.log(last_post_time);
 
 function callback() {
@@ -25,7 +24,6 @@ function callback() {
 
   request(options, function (error, response, body) {
     if (error){
-      console.log('!!!!!!!!!!ERROR!!!!!!!!!!');
       console.log(error);
     }else{
       console.log('Processing request response...');
@@ -40,7 +38,7 @@ function callback() {
         POLLING_INTERVAL = 60000;
       }
 
-      console.log('GITHUB REQUEST STATUS: ' + response.statusCode);
+      console.log('Github Request Status: ' + response.statusCode);
       if (response.statusCode == 200){
         //parse body and tweet when ready
 
@@ -58,8 +56,6 @@ function callback() {
             }else{
               status_message = '' + event_body[i].payload.release.name + ' is now available! Notes & links here: ' + event_body[i].payload.release.html_url;
             }
-            console.log('TWITTER POST:  ReleaseEvent ' + event_body[i].payload.release.name);
-
           } else if (event_type == 'CreateEvent'){
             //not used on repo events
           } else if (event_type == 'IssuesEvent' && event_body.length === 1){
@@ -70,11 +66,10 @@ function callback() {
             //only tweet non-merge-back and closed to dev pull requests
             var title = event_body[i].payload.pull_request.title;
             if (event_body[i].payload.action === "closed" && event_body[i].payload.pull_request.merged === true && title.substr(0,22) !== 'Merge conflict merging'){
-              console.log('TWITTER POST: PullRequestClosed ' + title);
               status_message = 'New code added to the main branch - check it out: ' + event_body[i].payload.pull_request.html_url;
             }
           } else {
-              //some other event type we dont' care about
+              //some other event type we dont' care about but might someday
           }
 
           if (status_message !== ''){
@@ -96,7 +91,7 @@ function callback() {
         //do something random if too much
         //time has gone by
 
-/*
+        /*  Possible future upgrade...
         //check Hub for popular questions or
         //new knowledge articles
         var nforce = require('nforce');
@@ -110,8 +105,7 @@ function callback() {
           mode: 'multi' // optional, 'single' or 'multi' user mode, multi default
         });
 
-*/
-
+        */
       } else {
         console.log('Unexpected response code: ' + response.statusCode);
       }
@@ -126,15 +120,7 @@ function callback() {
 
   setTimeout(callback, POLLING_INTERVAL);
 
-
-  //THIS JUST NEEDS TO BE TURNED INTO A STANDALONE FUNCTION
-  //TAKE status_message as its input, maintains a stack of messages
-  //to tweet out at regular intervals according to its own internally
-  //maintained clock.  calling code doesn't care about tweet times
-
-
   function twitterUpdate(status_message){
-
 
       var T = new Twit({
         consumer_key:         process.env.CONSUMER_KEY,
@@ -153,20 +139,16 @@ function callback() {
         }
       });
     };
-    //only tweet every 15 minutes, queue everything else up
 
+    //only tweet no more than every 4 minutes, queue everything else up
     console.log('DIFF: ' + (Date.now() - last_post_time));
-    if (Date.now() - last_post_time > 120000){
-      console.log('Tweet now');
+    if (Date.now() - last_post_time > 240000){
       postTweet(status_message);
       last_post_time = Date.now();
     } else{
-      console.log('Tweet Later');
+      var timetowait = (Date.now() - last_post_time) + 240000;
+      last_post_time = Date.now() + timetowait + 240000;
 
-      var timetowait = (Date.now() - last_post_time) + 120000;
-      console.log('WTF? ' + timetowait);
-      last_post_time = Date.now() + timetowait + 120000;
-      
       setTimeout(function() {
         postTweet(status_message);
       }, timetowait);
