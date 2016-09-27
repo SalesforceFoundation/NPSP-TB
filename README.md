@@ -1,1 +1,1 @@
-Twitter bot for the Nonprofit Starter Pack.
+Twitter bot for the Nonprofit Success Pack.
